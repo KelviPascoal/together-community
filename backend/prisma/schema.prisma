@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  name      String
+  bio       String?
+  password  String
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  interests     Interest[]
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  followers     Follow[]   @relation("Following")
+  following     Follow[]   @relation("Followers")
+  activities    Activity[]
+  participations ActivityParticipation[]
+
+  @@map("users")
+}
+
+model Interest {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  category    String
+  createdAt   DateTime @default(now())
+
+  users      User[]
+  activities Activity[]
+
+  @@map("interests")
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  location    String?
+  date        DateTime
+  maxParticipants Int?
+  creatorId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator       User                    @relation(fields: [creatorId], references: [id])
+  interests     Interest[]
+  participants  ActivityParticipation[]
+
+  @@map("activities")
+}
+
+model ActivityParticipation {
+  id         String   @id @default(uuid())
+  userId     String
+  activityId String
+  status     String   // "pending", "confirmed", "declined"
+  joinedAt   DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  activity Activity @relation(fields: [activityId], references: [id])
+
+  @@unique([userId, activityId])
+  @@map("activity_participations")
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  content   String
+  imageUrl  String?
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author   User      @relation(fields: [authorId], references: [id])
+  comments Comment[]
+  likes    Like[]
+
+  @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  postId    String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post   Post @relation(fields: [postId], references: [id])
+  author User @relation(fields: [authorId], references: [id])
+
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+  @@map("likes")
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Followers", fields: [followerId], references: [id])
+  following User @relation("Following", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
