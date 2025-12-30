@@ -4,16 +4,19 @@ WORKDIR /app
 
 # Copiar arquivos de dependências
 COPY package*.json ./
-COPY tsconfig.json ./
 
 # Instalar dependências
 RUN npm install
 
-# Copiar código-fonte
-COPY . .
+# Copiar Prisma schema
+COPY prisma ./prisma/
 
 # Gerar o Prisma Client
 RUN npx prisma generate
+
+# Copiar o resto do código-fonte
+COPY tsconfig.json ./
+COPY src ./src/
 
 # Expor porta
 EXPOSE 3001
